@@ -8,6 +8,7 @@ from tensorflow.keras import Sequential
 from tensorflow.keras.layers import Conv2D, MaxPooling2D, Dense, Flatten, Dropout, BatchNormalization
 from tensorflow.keras.optimizers import SGD
 from tensorflow.keras.datasets import cifar10
+import time
 
 # Import Dataset
 def load_dataset():
@@ -96,12 +97,15 @@ def run_test_harness():
     x_train, y_train, x_test, y_test = load_dataset()
     x_train, x_test = prep_images(x_train, x_test)
     model = define_model()
-
+    time_start = time.perf_counter()
     # Fitting model requires params: epochs, batch size (2-32)
     history = model.fit(x_train, y_train, epochs=100, batch_size=64, validation_data=(x_test, y_test), verbose=0)
+    time_elapsed = (time.perf_counter() - time_start)
     # evaluate model
     _, acc = model.evaluate(x_test, y_test, verbose=0)
-    print('> %.3f' % (acc * 100.0))
+    print(f"time_elapsed: {time_elapsed}")
+    print(f"Accuracy: {acc * 100.0}%")
+
     model.save('final_model.h5')
     # learning curves
     summarize_diagnostics(history)
