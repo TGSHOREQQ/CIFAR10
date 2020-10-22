@@ -1,33 +1,27 @@
-
-# make a prediction for a new image.
 from tensorflow.keras.preprocessing.image import load_img, img_to_array
 from tensorflow.keras.models import load_model
 
 
 # load and prepare the image
 def load_image(filename):
-    # load the image
     img = load_img(filename, target_size=(32, 32))
-    # convert to array
+    # Image array of pixels & colours
     img = img_to_array(img)
     # reshape into a single sample with 3 channels
+    # Numbers pixels with values
     img = img.reshape(1, 32, 32, 3)
-    # prepare pixel data
+
     img = img.astype('float32')
+    # Normalises values
     img = img / 255.0
     return img
 
 
-# load an image and predict the class
 def run_example():
-    # load the image
-    img = load_image('sample_image.png')
-    # load model
+    img = load_image('sample_image-1.png')
     model = load_model('final_model.h5')
-    # predict the class
     result = model.predict_classes(img)
     print(result[0])
 
 
-# entry point, run the example
 run_example()
