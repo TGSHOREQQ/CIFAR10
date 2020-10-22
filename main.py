@@ -1,12 +1,13 @@
 # Recreating CNN self, with description and explanations
 # Taking help from machinelearningmastery.com/how-to-develop-a-cnn-from-scratch-for-cifar-10-photo-classification
+
+# Research Data Augmentation - specifically for images
 import matplotlib.pyplot as plt
 from tensorflow.keras.utils import to_categorical
 from tensorflow.keras import Sequential
-from tensorflow.keras.layers import Conv2D, MaxPooling2D, Dense, Flatten
+from tensorflow.keras.layers import Conv2D, MaxPooling2D, Dense, Flatten, Dropout, BatchNormalization
 from tensorflow.keras.optimizers import SGD
 from tensorflow.keras.datasets import cifar10
-
 
 # Import Dataset
 def load_dataset():
@@ -30,35 +31,45 @@ def prep_images(train, test):
     return train_norm, test_norm
 
 
-# define cnn model
+# Baseline VGG 3 layer CNN model
+# Extreme overfitting as seen in the plot
 def define_model():
     model = Sequential()
     # VGG-style architecture for a baseline model
-    # VGG - Very Deep Convolutional Networks for Large Scale Image Recognition. This network is characterized by its
+    # VGG 3 - Very Deep Convolutional Networks for Large Scale Image Recognition. This network is characterized by its
     # simplicity, using only 3×3 convolutional layers stacked on top of each other in increasing depth
     # padding ensures height and width of output matches input
-    model.add(
-        [
-            # Feature detection part of model
-            Conv2D(32, (3, 3), activation='relu', kernel_initializer='he_uniform', padding='same',
-                   input_shape=(32, 32, 3)),
-            Conv2D(32, (3, 3), activation='relu', kernel_initializer='he_uniform', padding='same'),
-            MaxPooling2D((2, 2)),
-            Conv2D(64, (3, 3), activation='relu', kernel_initializer='he_uniform', padding='same'),
-            Conv2D(64, (3, 3), activation='relu', kernel_initializer='he_uniform', padding='same'),
-            MaxPooling2D((2, 2)),
-            Conv2D(128, (3, 3), activation='relu', kernel_initializer='he_uniform', padding='same'),
-            Conv2D(128, (3, 3), activation='relu', kernel_initializer='he_uniform', padding='same'),
-            MaxPooling2D((2, 2)),
 
-            # Example output part of model
-            Flatten(),
-            Dense(128, activation='relu', kernel_initializer='he_uniform'),
-            Dense(10, activation='softmax')
-        ]
-    )
+    # Feature detection part of model
+    model.add(Conv2D(32, (3, 3), activation='relu', kernel_initializer='he_uniform', padding='same', input_shape=(32, 32, 3)))
+    model.add(BatchNormalization())
+    model.add(Conv2D(32, (3, 3), activation='relu', kernel_initializer='he_uniform', padding='same'))
+    model.add(BatchNormalization())
+    model.add(MaxPooling2D((2, 2)))
+    model.add(Dropout(0.2))
+
+    model.add(Conv2D(64, (3, 3), activation='relu', kernel_initializer='he_uniform', padding='same'))
+    model.add(BatchNormalization())
+    model.add(Conv2D(64, (3, 3), activation='relu', kernel_initializer='he_uniform', padding='same'))
+    model.add(BatchNormalization())
+    model.add(MaxPooling2D((2, 2)))
+    model.add(Dropout(0.3))
+    model.add(Conv2D(128, (3, 3), activation='relu', kernel_initializer='he_uniform', padding='same'))
+    model.add(BatchNormalization())
+    model.add(Conv2D(128, (3, 3), activation='relu', kernel_initializer='he_uniform', padding='same'))
+    model.add(BatchNormalization())
+    model.add(MaxPooling2D((2, 2)))
+    model.add(Dropout(0.4))
+
+    # Example output part of model
+    model.add(Flatten())
+    model.add(Dense(128, activation='relu', kernel_initializer='he_uniform'))
+    model.add(BatchNormalization())
+    model.add(Dropout(0.5))
+    model.add(Dense(10, activation='softmax'))
+
     # compile model
-    opt = SGD(lr=0.001, momentum=0.9)
+    opt = SGD(lr=0.01, momentum=0.9)
     model.compile(optimizer=opt, loss='categorical_crossentropy', metrics=['accuracy'])
 
     return model
@@ -77,8 +88,7 @@ def summarize_diagnostics(history):
     plt.plot(history.history['accuracy'], color='blue', label='train')
     plt.plot(history.history['val_accuracy'], color='orange', label='test')
     # save plot to file
-    # filename = sys.argv[0].split('/')[-1]
-    # plt.savefig(filename + '_plot.png')
+    plt.savefig('Loss_4' + '_plot_Dropout_Aug_BatchNorm.png')
     plt.close()
 
 
@@ -92,6 +102,7 @@ def run_test_harness():
     # evaluate model
     _, acc = model.evaluate(x_test, y_test, verbose=0)
     print('> %.3f' % (acc * 100.0))
+    model.save('final_model.h5')
     # learning curves
     summarize_diagnostics(history)
 
